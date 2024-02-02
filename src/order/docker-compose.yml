@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres-order-container
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready"]
+    #   interval: 3s
+    #   timeout: 5s
+    #   retries: 5
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mysecretpassword
+    volumes:
+      - pg-data:/var/lib/postgresql/order_data
+    ports:
+      - "5432:5432"
+
+  service:
+    container_name: order
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./alembic:/service/alembic
+
+volumes:
+  pg-data:
