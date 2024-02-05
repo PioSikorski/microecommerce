@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres-product-container
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mysecretpassword
+    volumes:
+      - pg-data:/var/lib/postgresql/product_data
+    ports:
+      - "5432:5432"
+
+  product_service:
+    container_name: product-container
+    build:
+      context: ..
+      dockerfile: /product/Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+volumes:
+  pg-data:
+
