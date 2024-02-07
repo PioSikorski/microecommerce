@@ -1,15 +1,23 @@
-from sqlalchemy import create_engine
-from typing import Generator, Annotated
-from sqlmodel import Session
+from typing import Annotated
+
+from pymongo import MongoClient
+from pymongo.database import Database
 from fastapi import Depends
+from contextlib import contextmanager
+from typing import Generator, Any
 
 
-DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres:5432/orderdb"
+MONGODB_URL = "mongodb://myuser:mysecretpassword@mongodb:27017/"
 
-engine = create_engine(DATABASE_URL)
+client = MongoClient(MONGODB_URL)
 
-def get_db() -> Generator:
-    with Session(engine) as session:
-        yield session
-        
-SessionDep = Annotated[Session, Depends(get_db)]
+db = client["orderdb"]
+
+@contextmanager
+def get_db() -> Generator[Any, Any, Any]:
+    try:
+        yield db
+    finally:
+        client.close()
+
+SessionDep = Annotated[Database, Depends(get_db)]

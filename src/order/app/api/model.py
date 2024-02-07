@@ -1,70 +1,36 @@
-from datetime import datetime
-from typing import Union, List
-from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, Annotated, List
+
+from pydantic import BaseModel, Field
+from pydantic.functional_validators import BeforeValidator
 
 
-class OrderBase(SQLModel):
-    total_amount: float
+PyObjectId = Annotated[str, BeforeValidator(str)]
+
+
+class Order(BaseModel):
+    user_id: int
     status: str
+    shoppingcart_id: str
     address: str
     phone: str
 
 
-class OrderCreate(OrderBase):
-    total_amount: Union[float, None] = None
-    status: Union[str, None] = 'pending'
-    address: Union[str, None] = None
-    phone: Union[str, None] = None
+class OrderUpdate(Order):
+    user_id: int = None
+    status: Optional[str] = None
+    shoppingcart_id: str = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+  
 
-
-class OrderUpdate(OrderBase):
-    total_amount: Union[float, None] = None
-    status: Union[str, None] = None
-    address: Union[str, None] = None
-    phone: Union[str, None] = None
-    
-
-class Order(OrderBase, table=True):
-    id: Union[int, None] = Field(default=None, primary_key=True)
-    order_date: datetime = Field(default_factory=datetime.utcnow)
-    products: List["OrderProduct"] = Relationship(back_populates="order")
+class OrderCreate(Order):
+    user_id: Optional[int] = None
+    status: str = "pending"
     
     
-class OrderProductBase(SQLModel):
-    product_id: int
-    quantity: int
-    unit_price: float
-    
-
-class OrderProductCreate(OrderProductBase):
-    pass
-
-
-class OrderProductUpdate(OrderProductBase):
-    product_id: Union[int, None] = None
-    quantity: Union[int, None] = None
-    unit_price: Union[float, None] = None
-    
-
-class OrderProduct(OrderProductBase, table=True):
-    id: Union[int, None] = Field(default=None, primary_key=True)
-    order_id: Union[int, None] = Field(default=None, foreign_key="order.id", nullable=False)
-    order: Order = Relationship(back_populates="products")
-    product_id: int
-    quantity: int
-    unit_price: float
+class OrderOut(Order):
+    id: PyObjectId = Field(alias="_id")
     
     
-class OrderProductOut(OrderProductBase):
-    id: int
-    
-
-class OrderCreateWithProducts(SQLModel):
-    order: OrderCreate
-    products: List["OrderProductCreate"]
-
-
-class OrderOut(OrderBase):
-    id: int
-    order_date: datetime
-    products: List["OrderProduct"]
+class OrderCollection(BaseModel):
+    orders: List[Order]

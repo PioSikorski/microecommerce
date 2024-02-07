@@ -1,11 +1,17 @@
 FROM python:3.11-slim
 
-WORKDIR /service
+WORKDIR /service/src/order/
 
-COPY . /service
+COPY ./src/__init__.py /service/src/
+
+COPY ./src/core/ /service/src/core/
+
+COPY ./src/order/ /service/src/order/
+
+WORKDIR /service/src/order/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /service/app
+WORKDIR /service
 
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000" ]
+CMD [ "uvicorn", "src.cart.app.main:app", "--host", "0.0.0.0", "--port", "8000" ]
