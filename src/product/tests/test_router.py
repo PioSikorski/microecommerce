@@ -4,16 +4,17 @@ from sqlmodel import Session
 from src.product.app.api.model import ProductCreate, ProductUpdate
 from src.tests.utils import random_lower_string, random_float, random_int
 from src.product.app.api import crud
+from src.core.security import verify_token
 
 
-def test_create_product_superuser(client: TestClient) -> None:
+def test_create_product_superuser(client: TestClient, superuser_token_headers) -> None:
     name = random_lower_string()
     description = random_lower_string()
     category = random_lower_string()
     price = random_float()
     quantity = random_int()
     data = {"name": name, "description": description, "category": category, "price": price, "quantity": quantity}
-    response = client.post('/products/', json=data)
+    response = client.post('/products/', headers=superuser_token_headers, json=data)
     assert 200 <= response.status_code < 300
     product = response.json()
     assert product["name"] == name
@@ -24,14 +25,14 @@ def test_create_product_superuser(client: TestClient) -> None:
     assert "id" in product
     
 
-def test_create_product_normal_user(client: TestClient) -> None:
+def test_create_product_normal_user(client: TestClient, normal_user_token_headers) -> None:
     name = random_lower_string()
     description = random_lower_string()
     category = random_lower_string()
     price = random_float()
     quantity = random_int()
     data = {"name": name, "description": description, "category": category, "price": price, "quantity": quantity}
-    response = client.post('/products/', json=data)
+    response = client.post('/products/', headers=normal_user_token_headers, json=data)
     assert response.status_code == 401
 
 
@@ -68,7 +69,7 @@ def test_read_product_by_name(client: TestClient, session: Session) -> None:
     assert existing_product.name == api_product["name"]
     
     
-def test_update_product_superuser(client: TestClient, session: Session) -> None:
+def test_update_product_superuser(client: TestClient, session: Session, superuser_token_headers) -> None:
     name = random_lower_string()
     description = random_lower_string()
     category = random_lower_string()
@@ -79,13 +80,13 @@ def test_update_product_superuser(client: TestClient, session: Session) -> None:
     category_update = random_lower_string()
     id = product.id
     data = {"category": category_update}
-    response = client.put(f'/products/{id}', json=data)
+    response = client.put(f'/products/{id}', headers=superuser_token_headers, json=data)
     assert 200 <= response.status_code < 300
     updated_product = response.json()
     assert product.category == updated_product["category"]
 
 
-def test_update_product_normal_user(client: TestClient, session: Session) -> None:
+def test_update_product_normal_user(client: TestClient, session: Session, normal_user_token_headers) -> None:
     name = random_lower_string()
     description = random_lower_string()
     category = random_lower_string()
@@ -96,7 +97,7 @@ def test_update_product_normal_user(client: TestClient, session: Session) -> Non
     category_update = random_lower_string()
     id = product.id
     data = {"category": category_update}
-    response = client.put(f'/products/{id}', json=data)
+    response = client.put(f'/products/{id}', headers=normal_user_token_headers, json=data)
     assert response.status_code == 401
 
 

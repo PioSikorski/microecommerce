@@ -24,3 +24,13 @@ def client_fixture(db: Collection):
     client = TestClient(app)
     yield client
     app.dependency_overrides.clear()
+
+@pytest.fixture(name="superuser_token_headers", scope="module")
+def super_token_headers():
+    payload = create_access_token(subject=1, superuser=True)
+    return {"Authorization": f"Bearer {payload}"}
+    
+@pytest.fixture(name="normal_user_token_headers", scope="module")
+def normal_user_token_headers():
+    payload = create_access_token(subject=2, superuser=False)
+    return {"Authorization": f"Bearer {payload}"}

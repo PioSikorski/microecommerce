@@ -1,5 +1,4 @@
 from pymongo.collection import Collection
-from bson.objectid import ObjectId
 
 from src.cart.app.api.crud import crud
 

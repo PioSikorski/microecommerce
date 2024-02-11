@@ -1,7 +1,9 @@
 from typing import Any, List
 
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import select
+from src.core.security import verify_token
 
 from src.product.app.api.model import Product, ProductOut
 from src.product.app.api.schema import ProductCreate, ProductUpdate
@@ -11,6 +13,8 @@ from src.product.app.api import crud
 
 router = APIRouter(prefix='/products',
                    tags=['products'])
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login/access-token')
 
 
 @router.get('/', response_model=List[ProductOut])
@@ -40,13 +44,21 @@ def read_category(session: SessionDep, category: str, skip: int = 0, limit: int 
 
 
 @router.post('/', response_model=ProductOut)
-def create_product(*, session: SessionDep, product_in: ProductCreate) -> Any:
+def create_product(*, session: SessionDep, product_in: ProductCreate, token: str = Depends(oauth2_scheme)) -> Any:
+    user = verify_token(token)
+    superuser = user.get("superuser")
+    if superuser == "False":
+        raise HTTPException(status_code=401, detail="You are not authorized to perform this action")
     product = crud.product.create(db=session, obj_in=product_in)
     return product
 
 
 @router.put('/{id}', response_model=ProductOut)
-def update_product(session: SessionDep,  id: int, product_in: ProductUpdate) -> Any:
+def update_product(session: SessionDep,  id: int, product_in: ProductUpdate, token: str = Depends(oauth2_scheme)) -> Any:
+    user = verify_token(token)
+    superuser = user.get("superuser")
+    if superuser == "False":
+        raise HTTPException(status_code=401, detail="You are not authorized to perform this action")
     product = crud.product.get(db=session, id=id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -56,7 +68,11 @@ def update_product(session: SessionDep,  id: int, product_in: ProductUpdate) -> 
 
 
 @router.delete('/{id}', response_model=ProductOut)
-def delete_product(session: SessionDep,  id: int) -> Any:
+def delete_product(session: SessionDep,  id: int, token: str = Depends(oauth2_scheme)) -> Any:
+    user = verify_token(token)
+    superuser = user.get("superuser")
+    if superuser == "False":
+        raise HTTPException(status_code=401, detail="You are not authorized to perform this action")
     product = crud.product.get(db=session, id=id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
