@@ -2,11 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /service/src/product/
 
-COPY ./base_crud.py /service/src/
+COPY ./src/__init__.py /service/src/
 
-COPY ./__init__.py /service/src/
+COPY ./src/core/ /service/src/core/
 
-COPY ./product/ /service/src/product/
+COPY ./src/product/ /service/src/product/
+
+WORKDIR /service/src/product/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
