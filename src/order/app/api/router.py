@@ -45,7 +45,7 @@ def read_order_products(session: SessionDep, id: str, token: str = Depends(oauth
         raise HTTPException(status_code=404, detail="Order not found")
     if order.get("user_id") != user.get("user_id") and user.get("superuser") == "False":
         raise HTTPException(status_code=401, detail="Unauthorized")
-    products = requests.get(f"http://localhost:8000/carts/{order.get('shoppingcart_id')}/products")
+    products = requests.get(f"http://localhost:8003/carts/{order.get('shoppingcart_id')}/products")
     return products.json()
 
 

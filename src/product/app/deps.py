@@ -7,7 +7,7 @@ from fastapi import Depends
 from src.product.app.api.model import SQLModel
 
 
-DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres:5432/productdb"
+DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres-product-container:5432/productdb"
 
 engine = create_engine(DATABASE_URL)
 
