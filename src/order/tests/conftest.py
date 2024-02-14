@@ -1,5 +1,5 @@
 import pytest
-from mongomock import MongoClient, Collection
+from mongomock_motor import AsyncMongoMockClient, AsyncMongoMockCollection
 from fastapi.testclient import TestClient
 
 from src.core.security import create_access_token
@@ -9,14 +9,14 @@ from src.order.app.main import app
 
 @pytest.fixture(name="db")
 def mock_db():
-    client = MongoClient()
+    client = AsyncMongoMockClient()
     db = client.db
     collection = db.collection
     yield collection
     client.close()
     
 @pytest.fixture(name="client")  
-def client_fixture(db: Collection):  
+def client_fixture(db: AsyncMongoMockCollection):  
     def get_db_override():  
         return db
 

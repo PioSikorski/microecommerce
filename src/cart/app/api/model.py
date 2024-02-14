@@ -16,12 +16,13 @@ class ShoppingCartProduct(BaseModel):
 
 class ShoppingCart(BaseModel):
     user_id: int
-    total_amount: float = Field(...)
+    total_amount: float
     products: List["ShoppingCartProduct"]
     
 
 class ShoppingCartCreate(ShoppingCart):
-    pass
+    user_id: Optional[int] = None
+    total_amount: Optional[float] = None
 
 
 class ShoppingCartUpdate(ShoppingCart):
@@ -41,7 +42,3 @@ class ShoppingCartProductUpdate(ShoppingCartProduct):
 
 class ShoppingCartProductCreate(ShoppingCartProduct):
     pass
-    
-
-class ShoppingCartCollection(BaseModel):
-    shoppingCarts: List[ShoppingCart]

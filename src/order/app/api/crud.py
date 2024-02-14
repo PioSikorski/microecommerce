@@ -1,14 +1,21 @@
+from typing import List
+
 from pymongo.collection import Collection
-from bson import ObjectId
 
 from src.core.nosql_crud import BaseCRUD
 
 
 class OrderCRUD(BaseCRUD):
-    def get_all_by_status(self, db: Collection, status: str):
-        return list(db.find({"status": status}))
+    async def get_all_by_status(self, db: Collection, status: str) -> List:
+        orders = []
+        async for order in db.find({"status": status}):
+            orders.append(order)
+        return orders
     
-    def get_all_by_user(self, db: Collection, user_id: str):
-        return list(db.find({"user_id": user_id}))
+    async def get_all_by_user(self, db: Collection, user_id: int) -> List:
+        orders = []
+        async for order in db.find({"user_id": user_id}):
+            orders.append(order)
+        return orders
 
 crud = OrderCRUD()

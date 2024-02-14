@@ -30,7 +30,3 @@ class OrderCreate(Order):
     
 class OrderOut(Order):
     id: PyObjectId = Field(alias="_id")
-    
-    
-class OrderCollection(BaseModel):
-    orders: List[Order]

@@ -1,23 +1,18 @@
-from typing import Annotated
+from typing import Annotated, Generator
 
-from pymongo import MongoClient
-from pymongo.database import Database
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from fastapi import Depends
-from contextlib import contextmanager
-from typing import Generator, Any
 
 
-MONGODB_URL = "mongodb://myuser:mysecretpassword@mongodb:27017/"
+MONGODB_URL = "mongodb://myuser:mysecretpassword@order-mongodb-container:27017/"
 
-client = MongoClient(MONGODB_URL)
-
+client = AsyncIOMotorClient(MONGODB_URL)
 db = client["orderdb"]
 
-@contextmanager
-def get_db() -> Generator[Any, Any, Any]:
+def get_db() -> Generator:
     try:
-        yield db
+        yield db.collection['orders']
     finally:
-        client.close()
+        pass
 
-SessionDep = Annotated[Database, Depends(get_db)]
+SessionDep = Annotated[AsyncIOMotorCollection, Depends(get_db)]
