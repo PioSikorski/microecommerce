@@ -1,6 +1,6 @@
-from sqlalchemy import create_engine
 from typing import Generator, Annotated
-from sqlmodel import Session
+
+from sqlmodel import Session, create_engine
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from src.user.app.api.model import User, TokenPayload, SQLModel
 from src.core.config import settings
 from src.user.app import init_db
+
 
 DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres-user-container:5432/userdb"
 
@@ -25,7 +26,6 @@ def get_db() -> Generator:
         
 SessionDep = Annotated[Session, Depends(get_db)]
 TokenDep = Annotated[str, Depends(reusable_oauth2)]
-
 
 def get_current_user(session: SessionDep, token: TokenDep) -> User:
     try:

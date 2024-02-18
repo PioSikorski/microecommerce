@@ -1,14 +1,18 @@
 from typing import Any, Dict, Optional, Union
-from sqlmodel import Session, select
+from sqlalchemy.orm import Session
 
 from src.core.sql_crud import CRUDBase
-from src.user.app.api.model import User, UserCreate, UserUpdate
+from src.user.app.api.model import User, UserCreate, UserUpdate, UserWithOrders
 from src.core.security import get_password_hash, verify_password
 
-class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
-    def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
-        return db.exec(select(User).where(User.email == email)).first()
 
+class CRUDUser(CRUDBase[UserWithOrders, UserCreate, UserUpdate]):
+    def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
+        return db.query(User).filter(User.email == email).first()
+    
+    def get_user_orders(self, db: Session, *, id: int) -> Optional[UserWithOrders]:
+        return db.query(User).filter(User.id == id).first()
+        
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
         db_obj = User(
             email=obj_in.email,
@@ -22,13 +26,13 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return db_obj
 
     def update(
-        self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
+        self, db: Session, *, db_obj: UserWithOrders, obj_in: Union[UserUpdate, Dict[str, Any]]
     ) -> User:
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
             update_data = obj_in.model_dump(exclude_unset=True)
-        if update_data["password"]:
+        if "password" in update_data and update_data["password"]:
             hashed_password = get_password_hash(update_data["password"])
             del update_data["password"]
             update_data["hashed_password"] = hashed_password

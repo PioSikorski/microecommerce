@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Union, List
-from sqlmodel import Session, select
 
+from sqlalchemy.orm import Session
 
 from src.core.sql_crud import CRUDBase
 from src.product.app.api.model import Product
@@ -9,10 +9,10 @@ from src.product.app.api.schema import ProductCreate, ProductUpdate
 
 class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
     def get_by_name(self, db: Session, *, name: str) -> Optional[Product]:
-        return db.exec(select(Product).where(Product.name == name)).first()
+        return db.query(Product).filter(Product.name == name).first()
 
     def get_category(self, db: Session, *, category: str, skip: int = 0, limit: int = 100) -> Optional[List[Product]]:
-        return db.exec(select(Product).where(Product.category == category).offset(skip).limit(limit)).all()
+        return db.query(Product).filter(Product.category == category).offset(skip).limit(limit).all()
     
     def create(self, db: Session, *, obj_in: ProductCreate) -> Product:
         db_obj = Product(
@@ -35,8 +35,8 @@ class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
             update_data = obj_in.model_dump(exclude_unset=True)
         return super().update(db, db_obj=db_obj, obj_in=update_data)
     
-    def delete(self, db: Session, *, id: int):
-        return super().remove(db, id=id)
+    def remove(self, db: Session, *, id: int):
+        return super().delete(db, id=id)
         
 
 product = CRUDProduct(Product)

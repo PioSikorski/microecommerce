@@ -29,12 +29,13 @@ def read_product_by_name(session: SessionDep, name: str) -> Any:
     return product
 
 
-@router.get('/{id}', response_model=ProductOut)
-def read_product(session: SessionDep, id: int) -> Any:
-    product = crud.product.get(db=session, id=id)
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return product
+# @router.get('/{id}', response_model=ProductOut)
+# def read_product(id: int, session: SessionDep) -> Any:
+#     product = crud.product.get(db=session, id=id)
+#     print(product)
+#     if not product:
+#         raise HTTPException(status_code=404, detail="Product not found")
+#     return product
 
 
 @router.get('/category/{category}', response_model=List[ProductOut])
@@ -62,7 +63,7 @@ def update_product(session: SessionDep,  id: int, product_in: ProductUpdate, tok
     product = crud.product.get(db=session, id=id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    data_in = ProductUpdate.model_dump(product_in)
+    data_in = ProductUpdate.model_validate(product_in.model_dump(exclude_unset=True))
     updated_product = crud.product.update(db=session, db_obj=product, obj_in=data_in)
     return updated_product
 
@@ -76,5 +77,5 @@ def delete_product(session: SessionDep,  id: int, token: str = Depends(oauth2_sc
     product = crud.product.get(db=session, id=id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    product = crud.product.delete(db=session, id=id)
+    product = crud.product.remove(db=session, id=id)
     return product

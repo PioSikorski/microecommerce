@@ -1,6 +1,23 @@
 version: '3'
 
 services:
+  rabbitmq:
+    container_name: rabbitmq-container
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - user_postgres
+      - product_postgres
+      - order_mongodb
+      - cart_mongodb
+      
   user_postgres:
     image: postgres
     container_name: postgres-user-container
@@ -19,7 +36,8 @@ services:
       context: ..
       dockerfile: /src/user/Dockerfile
     depends_on:
-      - user_postgres
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8000:8000"
 
@@ -42,12 +60,14 @@ services:
       context: ..
       dockerfile: /src/product/Dockerfile
     depends_on:
-      - product_postgres
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8001:8000"
 
 
   order_mongodb:
+    container_name: order-mongodb-container
     image: mongo
     environment:
       - MONGO_INITDB_DATABASE=orderdb
@@ -66,12 +86,14 @@ services:
       context: ..
       dockerfile: /src/order/Dockerfile
     depends_on:
-      - order_mongodb
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8002:8000"
 
 
   cart_mongodb:
+    container_name: cart-mongodb-container
     image: mongo
     environment:
       - MONGO_INITDB_DATABASE=cartdb
@@ -90,7 +112,8 @@ services:
       context: ..
       dockerfile: /src/cart/Dockerfile
     depends_on:
-      - cart_mongodb
+      rabbitmq:
+        condition: service_healthy
     ports:
       - "8003:8000"
 

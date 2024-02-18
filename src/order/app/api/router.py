@@ -9,6 +9,7 @@ from src.order.app.deps import SessionDep
 from src.core.consts import ORDER_STATUS
 from src.order.app.api.crud import crud
 from src.order.app.api.model import OrderCreate, OrderUpdate, OrderOut
+from src.order.app.api.service import orderproduct_rpc, orderuser_rpc
 
 
 router = APIRouter(prefix='/orders',
@@ -46,9 +47,10 @@ async def read_order_products(session: SessionDep, id: str, token: str = Depends
     if order.get("user_id") != user.get("user_id") and user.get("superuser") == "False":
         raise HTTPException(status_code=401, detail="Unauthorized")
     cart_id = order.get("shoppingcart_id")
-    products = await requests.get(f"http://cart_service:8003/carts/{cart_id}/products")
-    return products.json()
-
+    response = requests.get(f"http://cart-container:8000/carts/{cart_id}/products", headers={"Authorization": f"Bearer {token}"})
+    data = response.json()
+    return data
+    
 
 @router.get('/status/{status}', response_model=List[OrderOut])
 async def read_order_by_status(session: SessionDep, status: str, token: str = Depends(oauth2_scheme)) -> Any:
@@ -69,7 +71,19 @@ async def create_order(*, session: SessionDep, order_in: OrderCreate, token: str
         user_id = user.get("user_id")
         order_in.user_id = user_id
     data_in = order_in.model_dump()
+    cart_id = data_in.get("shoppingcart_id")
+    cart_response = requests.get(f"http://cart-container:8000/carts/{cart_id}/products", headers={"Authorization": f"Bearer {token}"})
+    products_data = cart_response.json()
+    response_product_rpc = orderproduct_rpc.call(products_data)
+    if response_product_rpc.get("status") == "failed":
+        raise HTTPException(status_code=400, detail=response_product_rpc.get("message"))
     order = await crud.create(db=session, obj_in=data_in)
+    order_data = {"user_id": order.get("user_id"), "order_id": str(order.get("_id"))}
+    response_user_rpc = orderuser_rpc.call(order_data)
+    if response_user_rpc.get("status") == "failed":
+        order_id = order.get("_id")
+        await crud.remove(db=session, id=order_id)
+        raise HTTPException(status_code=400, detail=response_user_rpc.get("message"))
     return order
     
 
