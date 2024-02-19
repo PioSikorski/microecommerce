@@ -66,7 +66,7 @@ async def test_add_product(db: AsyncMongoMockCollection) -> None:
     assert result["products"][0]["product_id"] == 1
     
     
-###  NotImplementedError: Array filters are not implemented in mongomock yet.
+# NotImplementedError: Array filters are not implemented in mongomock yet.   
 # @pytest.mark.asyncio
 # async def test_update_product(db: AsyncMongoMockCollection) -> None:
 #     obj_in = {"user_id": 1, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]}

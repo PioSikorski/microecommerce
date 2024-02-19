@@ -8,7 +8,7 @@ from src.core.security import verify_token
 from src.product.app.api.model import Product, ProductOut
 from src.product.app.api.schema import ProductCreate, ProductUpdate
 from src.product.app.deps import SessionDep
-from src.product.app.api import crud
+from src.product.app.api.crud import crud
 
 
 router = APIRouter(prefix='/products',
@@ -25,22 +25,21 @@ def read_products(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
 @router.get('/{name}', response_model=ProductOut)
 def read_product_by_name(session: SessionDep, name: str) -> Any:
-    product = crud.product.get_by_name(db=session, name=name)
+    product = crud.get_by_name(db=session, name=name)
     return product
 
 
-# @router.get('/{id}', response_model=ProductOut)
-# def read_product(id: int, session: SessionDep) -> Any:
-#     product = crud.product.get(db=session, id=id)
-#     print(product)
-#     if not product:
-#         raise HTTPException(status_code=404, detail="Product not found")
-#     return product
+@router.get('/id/{id}', response_model=ProductOut)
+def read_product(id: int, session: SessionDep) -> Any:
+    product = crud.get(db=session, id=id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
 
 
 @router.get('/category/{category}', response_model=List[ProductOut])
 def read_category(session: SessionDep, category: str, skip: int = 0, limit: int = 100):
-    products = crud.product.get_category(db=session, category=category)
+    products = crud.get_category(db=session, category=category)
     return products
 
 
@@ -50,7 +49,7 @@ def create_product(*, session: SessionDep, product_in: ProductCreate, token: str
     superuser = user.get("superuser")
     if superuser == "False":
         raise HTTPException(status_code=401, detail="You are not authorized to perform this action")
-    product = crud.product.create(db=session, obj_in=product_in)
+    product = crud.create(db=session, obj_in=product_in)
     return product
 
 
@@ -60,11 +59,11 @@ def update_product(session: SessionDep,  id: int, product_in: ProductUpdate, tok
     superuser = user.get("superuser")
     if superuser == "False":
         raise HTTPException(status_code=401, detail="You are not authorized to perform this action")
-    product = crud.product.get(db=session, id=id)
+    product = crud.get(db=session, id=id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     data_in = ProductUpdate.model_validate(product_in.model_dump(exclude_unset=True))
-    updated_product = crud.product.update(db=session, db_obj=product, obj_in=data_in)
+    updated_product = crud.update(db=session, db_obj=product, obj_in=data_in)
     return updated_product
 
 
@@ -74,8 +73,8 @@ def delete_product(session: SessionDep,  id: int, token: str = Depends(oauth2_sc
     superuser = user.get("superuser")
     if superuser == "False":
         raise HTTPException(status_code=401, detail="You are not authorized to perform this action")
-    product = crud.product.get(db=session, id=id)
+    product = crud.get(db=session, id=id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    product = crud.product.remove(db=session, id=id)
+    product = crud.remove(db=session, id=id)
     return product

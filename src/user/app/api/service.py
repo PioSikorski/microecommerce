@@ -4,7 +4,7 @@ import pika
 import json
 from sqlmodel import Session
 
-from src.user.app.api.crud import user
+from src.user.app.api.crud import crud
 from src.user.app.deps import engine
 
 
@@ -29,14 +29,14 @@ class UserRabbit:
 
     def proccess_order(self, session, order_data: Dict) -> Dict:
         user_id = order_data.get("user_id")
-        user_data = user.get_user_orders(db=session, id=user_id)
+        user_data = crud.get_user_orders(db=session, id=user_id)
         if not user_data:
             return {"status": "failed", "message": "User not found"}
         if user_data.orders_ids is None:
             user_data.orders_ids = set()
         user_data.orders_ids.add(order_data.get("order_id"))
         update_data = {"orders_ids": user_data.orders_ids}
-        user.update(db=session, db_obj=user_data, obj_in=update_data)
+        crud.update(db=session, db_obj=user_data, obj_in=update_data)
         return {"status": "success", "message": "Order add to user successfully"}
 
 def start_user_rabbit():

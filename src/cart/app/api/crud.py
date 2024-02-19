@@ -12,7 +12,7 @@ class CartCRUD(BaseCRUD):
         return await db.find_one({"_id": ObjectId(id)})
 
     async def update_product(self, db: Collection, id: str, product_id: int, obj_in: Dict) -> Dict:
-        db.update_one(
+        await db.update_one(
             {"_id": ObjectId(id)},
             {"$set": {"products.$[elem]": obj_in}},
             array_filters=[{"elem.product_id": product_id}]

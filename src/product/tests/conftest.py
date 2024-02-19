@@ -1,33 +1,26 @@
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, create_engine
-from sqlmodel.pool import StaticPool
+from sqlmodel import Session
 
 from src.product.app.api.model import SQLModel
 from src.product.app.main import app
-from src.product.app.deps import get_db
+from src.product.app.deps import engine
 from src.core.security import create_access_token
 
 
-@pytest.fixture(name="session")  
-def session_fixture():  
-    engine = create_engine(
-        "sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool,
-    )
-    SQLModel.metadata.create_all(engine)
+@pytest.fixture(name="session", scope="module")
+def db() -> Generator:
     with Session(engine) as session:
-        yield session  
+        SQLModel.metadata.create_all(engine)
+        yield session
+        SQLModel.metadata.clear(engine)
 
-
-@pytest.fixture(name="client")  
-def client_fixture(session: Session):  
-    def get_db_override():  
-        return session
-
-    app.dependency_overrides[get_db] = get_db_override
-    client = TestClient(app)
-    yield client
-    app.dependency_overrides.clear()
+@pytest.fixture(name="client", scope="module")  
+def client_fixture() -> Generator:  
+    with TestClient(app) as c:
+        yield c
     
 @pytest.fixture(name="superuser_token_headers", scope="module")
 def super_token_headers():

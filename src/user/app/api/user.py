@@ -6,7 +6,7 @@ from sqlmodel import select
 from src.user.app.api.model import User, UserCreateOpen, UserOut, UserUpdateMe, UserCreate, UserWithOrdersOut
 from src.user.app.deps import SessionDep, get_current_superuser, CurrentUser
 from src.core.security import get_password_hash
-from src.user.app.api import crud
+from src.user.app.api.crud import crud
 
 
 router = APIRouter(prefix="/users",
@@ -29,10 +29,10 @@ def create_user(session: SessionDep, user_in: UserCreate) -> Any:
     """
     user_in.password = get_password_hash(user_in.password)
     session.add(user_in)
-    user = crud.user.get_by_email(db=session, email=user_in.email)
+    user = crud.get_by_email(db=session, email=user_in.email)
     if user:
         raise HTTPException(status_code=400, detail='User already exists.')
-    user = crud.user.create(db=session, obj_in=user_in)
+    user = crud.create(db=session, obj_in=user_in)
     return user
 
 
@@ -49,11 +49,11 @@ def update_user_me(session: SessionDep, user_in: UserUpdateMe, current_user: Cur
     """
     Update own user.
     """
-    user = crud.user.get(db=session, id=current_user.id)
+    user = crud.get(db=session, id=current_user.id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user_in = UserUpdateMe(**user_in.model_dump(exclude_unset=True))
-    updated_user = crud.user.update(db=session, db_obj=user, obj_in=user_in)
+    updated_user = crud.update(db=session, db_obj=user, obj_in=user_in)
     return updated_user
 
 
@@ -62,11 +62,11 @@ def create_user_open(session: SessionDep, user_in: UserCreateOpen) -> Any:
     """
     Create new user without the need to be logged in.
     """
-    user = crud.user.get_by_email(db=session, email=user_in.email)
+    user = crud.get_by_email(db=session, email=user_in.email)
     if user:
         raise HTTPException(status_code=400, detail="User already exists.")
     data_in = UserCreate.model_validate(user_in.model_dump())
-    user_create = crud.user.create(db=session, obj_in=data_in)
+    user_create = crud.create(db=session, obj_in=data_in)
     return user_create
 
 
@@ -75,7 +75,7 @@ def read_user_by_id(id: int, session: SessionDep, current_user: CurrentUser) -> 
     """
     Get a specific user by id.
     """
-    user = crud.user.get(db=session, id=id)
+    user = crud.get(db=session, id=id)
     if user == current_user:
         return user
     if not current_user.is_superuser:
@@ -88,7 +88,7 @@ def read_user_orders(session: SessionDep, current_user: CurrentUser) -> Any:
     """
     Get a user orders ids.
     """
-    user = crud.user.get_user_orders(db=session, id=current_user.id)
+    user = crud.get_user_orders(db=session, id=current_user.id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user.orders_ids

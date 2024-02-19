@@ -13,19 +13,6 @@ class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
 
     def get_category(self, db: Session, *, category: str, skip: int = 0, limit: int = 100) -> Optional[List[Product]]:
         return db.query(Product).filter(Product.category == category).offset(skip).limit(limit).all()
-    
-    def create(self, db: Session, *, obj_in: ProductCreate) -> Product:
-        db_obj = Product(
-            name=obj_in.name,
-            description=obj_in.description,
-            category=obj_in.category,
-            price=obj_in.price,
-            quantity=obj_in.quantity,
-        )
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
 
     def update(
         self, db: Session, *, db_obj: Product, obj_in: Union[ProductUpdate, Dict[str, Any]]) -> Product:
@@ -39,4 +26,4 @@ class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
         return super().delete(db, id=id)
         
 
-product = CRUDProduct(Product)
+crud = CRUDProduct(Product)

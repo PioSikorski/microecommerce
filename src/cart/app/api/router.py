@@ -84,7 +84,7 @@ async def add_product_to_cart(session: SessionDep, id: str, product_in: Shopping
     return await crud.add_product(db=session, id=id, obj_in=data_in)
 
 
-@router.put('/{order_id}/products/{product_id}', response_model=ShoppingCartOut)
+@router.put('/{cart_id}/products/{product_id}', response_model=ShoppingCartOut)
 async def update_product_in_cart(session: SessionDep, cart_id: str, product_id: int, product_in: ShoppingCartProductUpdate, token: str = Depends(oauth2_scheme)) -> Any:
     user = verify_token(token)
     cart = await crud.get(db=session, id=cart_id)

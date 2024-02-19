@@ -4,7 +4,7 @@ import pika
 import json
 from sqlmodel import Session
 
-from src.product.app.api.crud import product as crud
+from src.product.app.api.crud import crud
 from src.product.app.deps import engine
 
 
@@ -15,7 +15,6 @@ class ProductRabbit:
         self.channel.queue_declare(queue='product')
         self.channel.basic_consume(queue='product', on_message_callback=self.on_request)
         
-
     def on_request(self, ch, method, props, body):
         order_data = json.loads(body)
         with Session(engine) as session:

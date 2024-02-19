@@ -50,4 +50,4 @@ class CRUDUser(CRUDBase[UserWithOrders, UserCreate, UserUpdate]):
         return user.is_superuser
 
 
-user = CRUDUser(User)
+crud = CRUDUser(User)

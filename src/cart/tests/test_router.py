@@ -71,10 +71,23 @@ async def test_add_product_superuser(client: TestClient, db: AsyncMongoMockColle
     assert len(cart["products"]) == 2
     assert cart["products"][0]["product_id"] == 1
     
-### NotImplementedError: Array filters are not implemented in mongomock yet.
+
+@pytest.mark.asyncio
+async def test_add_product_normal_user(client: TestClient, db: AsyncMongoMockCollection, normal_user_token_headers) -> None:
+    response = await crud.create(db=db, obj_in={"user_id": 2, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
+    cart_id = response["_id"]
+    response = client.put(f"/carts/{cart_id}/add", json={"product_id": 3, "quantity": 2, "unit_price": 50.0}, headers=normal_user_token_headers)
+    assert response.status_code == 200
+    cart = response.json()
+    assert cart["_id"] == str(cart_id)
+    assert len(cart["products"]) == 2
+    assert cart["products"][0]["product_id"] == 1
+    
+    
+#  NotImplementedError: Array filters are not implemented in mongomock yet.
 # @pytest.mark.asyncio
 # async def test_update_product_in_order_superuser(client: TestClient, db: AsyncMongoMockCollection, superuser_token_headers) -> None:
-#     response = crud.create(db=db, obj_in={"user_id": 2, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
+#     response = await crud.create(db=db, obj_in={"user_id": 2, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
 #     cart_id = response["_id"]
 #     product_id = 1
 #     product_in = {"quantity": 3, "unit_price": 60.0}
@@ -88,9 +101,10 @@ async def test_add_product_superuser(client: TestClient, db: AsyncMongoMockColle
 #     assert updated_cart["products"][0]["unit_price"] == product_in["unit_price"]
 
 
+#  NotImplementedError: Array filters are not implemented in mongomock yet.
 # @pytest.mark.asyncio
 # async def test_update_product_in_order_normal_user(client: TestClient, db: AsyncMongoMockCollection, normal_user_token_headers) -> None:
-#     response = crud.create(db=db, obj_in={"user_id": 2, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
+#     response = await crud.create(db=db, obj_in={"user_id": 2, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
 #     cart_id = response["_id"]
 #     product_id = 1
 #     product_in = {"quantity": 3, "unit_price": 60.0}

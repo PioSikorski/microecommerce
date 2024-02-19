@@ -16,7 +16,7 @@ def random_float() -> float:
 
 
 def random_int() -> int:
-    return random.randint(1, 1000)
+    return random.randint(5, 1000)
 
 
 def random_email() -> str:
