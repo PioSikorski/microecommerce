@@ -1,0 +1,68 @@
+version: '3'
+
+services:      
+  user_postgres:
+    image: postgres
+    container_name: user-postgres-container
+    environment:
+      POSTGRES_DB: ${USER_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+    volumes:
+      - pg-data:/var/lib/postgresql/user_data
+    ports:
+      - "5431:5432"
+
+  product_postgres:
+    image: postgres
+    container_name: product-postgres-container
+    environment:
+      POSTGRES_DB: ${PRODUCT_POSTGRES_DB}
+      POSTGRES_USER: ${PRODUCT_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PRODUCT_POSTGRES_PASSWORD}
+    volumes:
+      - pg-data:/var/lib/postgresql/product_data
+    ports:
+      - "5432:5432"
+
+  order_mongodb:
+    container_name: order-mongodb-container
+    image: mongo
+    environment:
+      - MONGO_INITDB_DATABASE=${ORDER_MONGODB_DB}
+      - MONGO_INITDB_ROOT_USERNAME=${ORDER_MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${ORDER_MONGODB_PASSWORD}
+    volumes:
+      - mongo-data:/var/lib/mongodb/order_data
+    command:
+      mongod --quiet --logpath /dev/null
+
+  cart_mongodb:
+    container_name: cart-mongodb-container
+    image: mongo
+    environment:
+      - MONGO_INITDB_DATABASE=${CART_MONGODB_DB}
+      - MONGO_INITDB_ROOT_USERNAME=${CART_MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${CART_MONGODB_PASSWORD}
+    volumes:
+      - mongo-data:/var/lib/mongodb/cart_data
+    command:
+      mongod --quiet --logpath /dev/null
+
+  test:
+    build:
+      context: ..
+      dockerfile: /src/tests/Dockerfile
+    env_file:
+      - /.env
+    volumes:
+      - .:/app
+    depends_on:
+      - user_postgres
+      - product_postgres
+      - order_mongodb
+      - cart_mongodb
+
+volumes:
+  pg-data:
+  mongo-data:

@@ -1,10 +1,9 @@
 import pika
 import uuid
 import json
-from bson import ObjectId
 
 
-class OrderCreatedClient:
+class OrderRabbitClient:
     def __init__(self, host, queue):
         self.host = host
         self.queue = queue
@@ -44,5 +43,5 @@ class OrderCreatedClient:
         return json.loads(self.response)
 
 
-orderproduct_rpc = OrderCreatedClient('rabbitmq', 'product')
-orderuser_rpc = OrderCreatedClient('rabbitmq', 'user')
+product_rpc_client = OrderRabbitClient('rabbitmq', 'product')
+user_rpc_client = OrderRabbitClient('rabbitmq', 'user')

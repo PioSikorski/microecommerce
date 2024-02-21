@@ -1,3 +1,4 @@
+import os
 from typing import Generator, Annotated
 
 from sqlmodel import Session, create_engine
@@ -7,21 +8,19 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 
 from src.user.app.api.model import User, TokenPayload, SQLModel
-from src.core.config import settings
-from src.user.app import init_db
+from src.core.config import USERDB_URL, settings
+from src.user.app.init_db import init_db
 
 
-DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres-user-container:5432/userdb"
-
-engine = create_engine(DATABASE_URL)
+engine = create_engine(USERDB_URL)
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl='/login/access-token')
 
 
 def get_db() -> Generator:
     SQLModel.metadata.create_all(engine)
-    init_db.init_db(Session(engine))
     with Session(engine) as session:
+        init_db(session)
         yield session
         
 SessionDep = Annotated[Session, Depends(get_db)]

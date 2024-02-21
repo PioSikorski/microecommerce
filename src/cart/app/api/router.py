@@ -50,7 +50,8 @@ async def read_cart_products(session: SessionDep, id: str, token: str = Depends(
 @router.post('/', response_model=ShoppingCartOut)
 async def create_cart(*, session: SessionDep, cart_in: ShoppingCartCreate, token: str = Depends(oauth2_scheme)) -> Any:
     user = verify_token(token)
-    cart_in.user_id = user.get("user_id")
+    if user.get("superuser") == "False" and not cart_in.user_id:
+        cart_in.user_id = user.get("user_id")
     cart_in.total_amount = calculate_total(cart_in)
     data_in = cart_in.model_dump()
     cart = await crud.create(db=session, obj_in=data_in)

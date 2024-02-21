@@ -27,8 +27,6 @@ def create_user(session: SessionDep, user_in: UserCreate) -> Any:
     """
     Create user.
     """
-    user_in.password = get_password_hash(user_in.password)
-    session.add(user_in)
     user = crud.get_by_email(db=session, email=user_in.email)
     if user:
         raise HTTPException(status_code=400, detail='User already exists.')
@@ -80,6 +78,8 @@ def read_user_by_id(id: int, session: SessionDep, current_user: CurrentUser) -> 
         return user
     if not current_user.is_superuser:
         raise HTTPException(status_code=400, detail="The user doesn't have enough privileges")
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 

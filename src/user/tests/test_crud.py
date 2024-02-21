@@ -80,6 +80,15 @@ def test_not_authenticate_user(session: Session) -> None:
     assert user is None
 
 
+def test_not_verify_password(session: Session) -> None:
+    password = random_lower_string()
+    email = random_email()
+    user_in = UserCreate(email=email, password=password)
+    user = crud.create(db=session, obj_in=user_in)
+    is_password_verified = verify_password(random_lower_string(), user.hashed_password)
+    assert is_password_verified is False
+
+
 def test_check_if_user_is_superuser(session: Session) -> None:
     email = random_email()
     password = random_lower_string()

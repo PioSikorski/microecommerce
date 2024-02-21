@@ -11,12 +11,11 @@ class UserBase(SQLModel):
     
 
 class UserWithOrders(UserBase):
-    orders_ids: Set[str]
+    orders_ids: Union[Set[str], None]
     
 
-class UserWithOrdersOut(UserBase):
+class UserWithOrdersOut(UserWithOrders):
     id: int
-    orders_ids: Set[str]
     
 
 class UserCreate(UserBase):

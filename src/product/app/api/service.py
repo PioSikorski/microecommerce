@@ -1,3 +1,6 @@
+import logging
+import time
+from threading import Thread
 from typing import Dict
 
 import pika
@@ -8,13 +11,34 @@ from src.product.app.api.crud import crud
 from src.product.app.deps import engine
 
 
-class ProductRabbit:
+class ProductRabbitConsumer:
     def __init__(self):
+        self.connection = None
+        self.channel = None
+        self.thread = None
+        
+    def start(self):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters('rabbitmq'))
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='product')
         self.channel.basic_consume(queue='product', on_message_callback=self.on_request)
-        
+        self.thread = Thread(target=self._start_consuming)
+        self.thread.start()
+
+    def _start_consuming(self):
+        try:
+            self.channel.start_consuming()
+        except Exception as e:
+            logging.warning("Connection to RabbitMQ failed. Retrying in 5 seconds...")
+            time.sleep(5)
+            self._start_consuming()
+
+    def stop(self):
+        self.channel.stop_consuming()
+        if self.thread is not None:
+            self.thread.join()
+        self.connection.close()
+    
     def on_request(self, ch, method, props, body):
         order_data = json.loads(body)
         with Session(engine) as session:
@@ -40,8 +64,6 @@ class ProductRabbit:
             update_data = {"quantity": quantity}
             crud.update(db=session, db_obj=db_product, obj_in=update_data)
         return {"status": "success", "message": "Products updated successfully"}
-            
 
-def start_product_rabbit():
-    product_rabbit = ProductRabbit()
-    product_rabbit.channel.start_consuming()
+    
+product_consumer = ProductRabbitConsumer()

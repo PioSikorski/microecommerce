@@ -17,24 +17,31 @@ services:
       - product_postgres
       - order_mongodb
       - cart_mongodb
-      
+
+
   user_postgres:
     image: postgres
-    container_name: postgres-user-container
+    container_name: user-postgres-container
     environment:
-      POSTGRES_DB: userdb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: ${USER_POSTGRES_DB}
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
     volumes:
       - pg-data:/var/lib/postgresql/user_data
     ports:
-      - "5431:5431"
+      - "5431:5432"
 
   user_service:
     container_name: user-container
     build:
       context: ..
       dockerfile: /src/user/Dockerfile
+    environment:
+      USER_POSTGRES_HOST: ${USER_POSTGRES_HOST}
+      USER_POSTGRES_PORT: ${USER_POSTGRES_PORT}
+      USER_POSTGRES_USER: ${USER_POSTGRES_USER}
+      USER_POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+      USER_POSTGRES_DB: ${USER_POSTGRES_DB}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -44,11 +51,11 @@ services:
 
   product_postgres:
     image: postgres
-    container_name: postgres-product-container
+    container_name: product-postgres-container
     environment:
-      POSTGRES_DB: productdb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: ${PRODUCT_POSTGRES_DB}
+      POSTGRES_USER: ${PRODUCT_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PRODUCT_POSTGRES_PASSWORD}
     volumes:
       - pg-data:/var/lib/postgresql/product_data
     ports:
@@ -59,6 +66,12 @@ services:
     build:
       context: ..
       dockerfile: /src/product/Dockerfile
+    environment:
+      PRODUCT_POSTGRES_HOST: ${PRODUCT_POSTGRES_HOST}
+      PRODUCT_POSTGRES_PORT: ${PRODUCT_POSTGRES_PORT}
+      PRODUCT_POSTGRES_USER: ${PRODUCT_POSTGRES_USER}
+      PRODUCT_POSTGRES_PASSWORD: ${PRODUCT_POSTGRES_PASSWORD}
+      PRODUCT_POSTGRES_DB: ${PRODUCT_POSTGRES_DB}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -70,13 +83,11 @@ services:
     container_name: order-mongodb-container
     image: mongo
     environment:
-      - MONGO_INITDB_DATABASE=orderdb
-      - MONGO_INITDB_ROOT_USERNAME=myuser
-      - MONGO_INITDB_ROOT_PASSWORD=mysecretpassword
+      - MONGO_INITDB_DATABASE=${ORDER_MONGODB_DB}
+      - MONGO_INITDB_ROOT_USERNAME=${ORDER_MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${ORDER_MONGODB_PASSWORD}
     volumes:
       - mongo-data:/var/lib/mongodb/order_data
-    ports:
-      - "5433:5433"
     command:
       mongod --quiet --logpath /dev/null
 
@@ -85,6 +96,12 @@ services:
     build:
       context: ..
       dockerfile: /src/order/Dockerfile
+    environment:
+      ORDER_MONGODB_HOST: ${ORDER_MONGODB_HOST}
+      ORDER_MONGODB_USER: ${ORDER_MONGODB_USER}
+      ORDER_MONGODB_PASSWORD: ${ORDER_MONGODB_PASSWORD}
+      ORDER_MONGODB_DB: ${ORDER_MONGODB_DB}
+      CART_SERVICE_NAME: cart_service
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -96,13 +113,11 @@ services:
     container_name: cart-mongodb-container
     image: mongo
     environment:
-      - MONGO_INITDB_DATABASE=cartdb
-      - MONGO_INITDB_ROOT_USERNAME=myuser
-      - MONGO_INITDB_ROOT_PASSWORD=mysecretpassword
+      - MONGO_INITDB_DATABASE=${CART_MONGODB_DB}
+      - MONGO_INITDB_ROOT_USERNAME=${CART_MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${CART_MONGODB_PASSWORD}
     volumes:
       - mongo-data:/var/lib/mongodb/cart_data
-    ports:
-      - "5434:5434"
     command:
       mongod --quiet --logpath /dev/null
 
@@ -111,6 +126,11 @@ services:
     build:
       context: ..
       dockerfile: /src/cart/Dockerfile
+    environment:
+      CART_MONGODB_HOST: ${CART_MONGODB_HOST}
+      CART_MONGODB_USER: ${CART_MONGODB_USER}
+      CART_MONGODB_PASSWORD: ${CART_MONGODB_PASSWORD}
+      CART_MONGODB_DB: ${CART_MONGODB_DB}
     depends_on:
       rabbitmq:
         condition: service_healthy

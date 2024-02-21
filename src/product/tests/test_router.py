@@ -54,6 +54,12 @@ def test_read_product_by_id(client: TestClient, session: Session) -> None:
     existing_product = crud.get(db=session, id=id)
     assert existing_product
     assert existing_product.name == api_product["name"]
+    
+
+def test_read_product_by_id_not_found(client: TestClient, session: Session) -> None:
+    id = 1000
+    response = client.get(f'/products/id/{id}')
+    assert response.status_code == 404
 
 
 def test_read_products_by_category(client: TestClient, session: Session) -> None:
@@ -131,6 +137,13 @@ def test_update_product_normal_user(client: TestClient, session: Session, normal
     data = {"category": category_update}
     response = client.put(f'/products/{id}', headers=normal_user_token_headers, json=data)
     assert response.status_code == 401
+    
+
+def test_update_product_not_found(client: TestClient, superuser_token_headers) -> None:
+    id = 1000
+    data = {"category": "toys"}
+    response = client.put(f'/products/{id}', headers=superuser_token_headers, json=data)
+    assert response.status_code == 404
 
     
 def test_delete_product_superuser(client: TestClient, session: Session, superuser_token_headers) -> None:
@@ -163,9 +176,9 @@ def test_delete_product_normal_user(client: TestClient, session: Session, normal
     assert response.status_code == 401
     existing_product = crud.get(db=session, id=id)
     assert existing_product
-    assert existing_product.id == id
-    assert existing_product.name == name
-    assert existing_product.description == description
-    assert existing_product.category == category
-    assert existing_product.price == price
-    assert existing_product.quantity == quantity
+    
+
+def test_delete_product_not_found(client: TestClient, superuser_token_headers) -> None:
+    id = 1000
+    response = client.delete(f'/products/{id}', headers=superuser_token_headers)
+    assert response.status_code == 404

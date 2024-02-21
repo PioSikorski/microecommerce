@@ -4,7 +4,6 @@ from src.user.app.api.model import User, UserCreate
 from src.core.config import settings
 from src.user.app.api.crud import crud
 
-DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres:5432/userdb"
 
 def init_db(session: Session) -> None:
     user = session.exec(select(User).where(User.email == f"{settings.FIRST_SUPERUSER}")).first()

@@ -1,3 +1,4 @@
+import os
 from typing import Generator, Annotated
 
 from sqlalchemy import create_engine
@@ -5,11 +6,10 @@ from sqlmodel import Session
 from fastapi import Depends
 
 from src.product.app.api.model import SQLModel
+from src.core.config import PRODUCTDB_URL
 
 
-DATABASE_URL = "postgresql://myuser:mysecretpassword@postgres-product-container:5432/productdb"
-
-engine = create_engine(DATABASE_URL)
+engine = create_engine(PRODUCTDB_URL)
 
 def get_db() -> Generator:
     SQLModel.metadata.create_all(engine)

@@ -82,6 +82,14 @@ async def test_read_order_products_normal_user(mock_get, client: TestClient, db:
  
 
 @pytest.mark.asyncio
+@patch('requests.get')
+async def test_read_order_products_not_found(mock_get, client: TestClient, db: Collection, superuser_token_headers) -> None:
+    mock_get.return_value.json.return_value = {"detail": "Shopping cart not found"}
+    response = client.get("/orders/5f1d8f2b5e8f2e4e3f9c5f1d/products", headers=superuser_token_headers)
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_read_order_products_wrong_user(client: TestClient, db: Collection, normal_user_token_headers) -> None:
     existing_order = await crud.create(db=db, obj_in={"user_id": 4, "status": "pending", "shoppingcart_id": "65c8dd402a24d2c9d160d17f", "address": "123 Main St", "phone": "123-456-7890"})
     id = existing_order["_id"]
@@ -105,12 +113,18 @@ async def test_order_by_status_normal_user(client: TestClient, db: Collection, n
     existing_order = await crud.create(db=db, obj_in={"user_id": 2, "status": "pending", "shoppingcart_id": "65c8dd402a24d2c9d160d17f", "address": "123 Main St", "phone": "123-456-7890"})
     response = client.get(f"/orders/status/pending", headers=normal_user_token_headers)
     assert response.status_code == 401
-    
+
+
+@pytest.mark.asyncio
+async def test_order_by_status_invalid_status(client: TestClient, db: Collection, superuser_token_headers) -> None:
+    response = client.get("/orders/status/invalid", headers=superuser_token_headers)
+    assert response.status_code == 400
+
 
 @pytest.mark.asyncio
 @patch('requests.get')
-@patch('src.order.app.api.service.orderproduct_rpc.call')
-@patch('src.order.app.api.service.orderuser_rpc.call')
+@patch('src.order.app.api.service.product_rpc_client.call')
+@patch('src.order.app.api.service.user_rpc_client.call')
 async def test_create_order(mock_product_call, mock_user_call, mock_get, client: TestClient, db: Collection, normal_user_token_headers) -> None:
     mock_get.return_value.json.return_value = [{"product_id": 1, "quantity": 2, "unit_price": 10.0}]
     mock_product_call.return_value.json.return_value = {"status": "success", "message": "Products updated successfully"}
@@ -122,7 +136,15 @@ async def test_create_order(mock_product_call, mock_user_call, mock_get, client:
     order = response.json()
     assert order["status"] == "pending"
     assert str(created_order['_id']) == order['_id']
-    
+
+
+@pytest.mark.asyncio
+async def test_create_order_no_user(client: TestClient, db: Collection) -> None:
+    data = {"shoppingcart_id": "65c8dd402a24d2c9d160d17f", "address": "123 Main St", "phone": "123-456-7890"}
+    response = client.post("/orders/", json=data)
+    assert 400 < response.status_code < 500
+    assert response.json() == {"detail": "Not authenticated"}
+
 
 @pytest.mark.asyncio
 async def test_update_order_normal_user(client: TestClient, db: Collection, normal_user_token_headers) -> None:
@@ -145,6 +167,14 @@ async def test_update_order_superuser(client: TestClient, db: Collection, superu
     
 
 @pytest.mark.asyncio
+async def test_update_order_not_found(client: TestClient, superuser_token_headers) -> None:
+    data = {"status": "shipped"}
+    response = client.put("/orders/5f1d8f2b5e8f2e4e3f9c5f1d", headers=superuser_token_headers, json=data)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Order not found"}
+    
+
+@pytest.mark.asyncio
 async def test_delete_order(client: TestClient, db: Collection, normal_user_token_headers) -> None:
     existing_order = await crud.create(db=db, obj_in={"user_id": 2, "status": "pending", "shoppingcart_id": "65c8dd402a24d2c9d160d17f", "address": "123 Main St", "phone": "123-456-7890"})
     id = existing_order["_id"]
@@ -161,3 +191,10 @@ async def test_delete_order_superuser(client: TestClient, db: Collection, superu
     assert response.status_code == 200
     deleted_order = response.json()
     assert deleted_order["_id"] == str(id)
+    
+
+@pytest.mark.asyncio
+async def test_delete_order_not_found(client: TestClient, superuser_token_headers) -> None:
+    response = client.delete("/orders/5f1d8f2b5e8f2e4e3f9c5f1d", headers=superuser_token_headers)
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Order not found"}

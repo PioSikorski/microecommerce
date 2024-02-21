@@ -1,10 +1,5 @@
 import random
 import string
-from typing import Dict
-
-from fastapi.testclient import TestClient
-
-from src.core.config import settings
 
 
 def random_lower_string() -> str:
@@ -21,15 +16,3 @@ def random_int() -> int:
 
 def random_email() -> str:
     return f"{random_lower_string()}@{random_lower_string()}.com"
-
-
-def get_superuser_token_headers(client: TestClient) -> Dict[str, str]:
-    login_data = {
-        "username": settings.FIRST_SUPERUSER,
-        "password": settings.FIRST_SUPERUSER_PASSWORD,
-    }
-    response = client.post("/login/access-token", data=login_data)
-    tokens = response.json()
-    token = tokens["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-    return headers

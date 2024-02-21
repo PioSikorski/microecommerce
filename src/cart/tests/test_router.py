@@ -45,6 +45,12 @@ async def test_read_cart_normal_user(client: TestClient, db: AsyncMongoMockColle
     
 
 @pytest.mark.asyncio
+async def test_read_cart_not_found(client: TestClient, db: AsyncMongoMockCollection, superuser_token_headers) -> None:
+    response = client.get("/carts/5f1d8f2b5e8f2e4e3f9c5f1d", headers=superuser_token_headers)
+    assert response.status_code == 404
+    
+
+@pytest.mark.asyncio
 async def test_read_cart_wrong_user(client: TestClient, db: AsyncMongoMockCollection, normal_user_token_headers) -> None:
     existing_cart = await crud.create(db=db, obj_in={"user_id": 4, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
     id = existing_cart["_id"]
@@ -58,7 +64,47 @@ async def test_read_cart_products_superuser(client: TestClient, db: AsyncMongoMo
     cart_id = response["_id"]
     response = client.get(f"/carts/{cart_id}/products", headers=superuser_token_headers)
     assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_read_cart_products_normal_user(client: TestClient, db: AsyncMongoMockCollection, normal_user_token_headers) -> None:
+    response = await crud.create(db=db, obj_in={"user_id": 2, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
+    cart_id = response["_id"]
+    response = client.get(f"/carts/{cart_id}/products", headers=normal_user_token_headers)
+    assert response.status_code == 200
+    assert response.json() == [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]
     
+
+@pytest.mark.asyncio
+async def test_read_cart_products_wrong_user(client: TestClient, db: AsyncMongoMockCollection, normal_user_token_headers) -> None:
+    existing_cart = await crud.create(db=db, obj_in={"user_id": 4, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
+    id = existing_cart["_id"]
+    response = client.get(f"/carts/{id}/products", headers=normal_user_token_headers)
+    assert response.status_code == 401
+    
+
+@pytest.mark.asyncio
+async def test_read_cart_products_not_found(client: TestClient, db: AsyncMongoMockCollection, superuser_token_headers) -> None:
+    response = client.get("/carts/5f1d8f2b5e8f2e4e3f9c5f1d/products", headers=superuser_token_headers)
+    assert response.status_code == 404
+    
+
+@pytest.mark.asyncio
+async def test_read_cart_products_wrong_user(client: TestClient, db: AsyncMongoMockCollection, normal_user_token_headers) -> None:
+    existing_cart = await crud.create(db=db, obj_in={"user_id": 4, "total_amount": 100.0, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}]})
+    id = existing_cart["_id"]
+    response = client.get(f"/carts/{id}/products", headers=normal_user_token_headers)
+    assert response.status_code == 401
+    
+
+@pytest.mark.asyncio
+async def test_create_cart_superuser(client: TestClient, db: AsyncMongoMockCollection, superuser_token_headers) -> None:
+    response = client.post("/carts/", json={"user_id": 2, "products": [{"product_id": 1, "quantity": 2, "unit_price": 50.0}], "status": "pending"}, headers=superuser_token_headers)
+    assert response.status_code == 200
+    cart = response.json()
+    assert cart["user_id"] == 2
+    assert cart["total_amount"] == 100.0
+
 
 @pytest.mark.asyncio
 async def test_add_product_superuser(client: TestClient, db: AsyncMongoMockCollection, superuser_token_headers) -> None:

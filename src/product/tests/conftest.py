@@ -10,18 +10,20 @@ from src.product.app.deps import engine
 from src.core.security import create_access_token
 
 
-@pytest.fixture(name="session", scope="module")
+@pytest.fixture(name="session", scope="function")
 def db() -> Generator:
-    with Session(engine) as session:
+    try:
         SQLModel.metadata.create_all(engine)
-        yield session
-        SQLModel.metadata.clear(engine)
-
+        with Session(engine) as session:
+            yield session
+    finally:
+        SQLModel.metadata.drop_all(engine)
+        
 @pytest.fixture(name="client", scope="module")  
-def client_fixture() -> Generator:  
+def client_fixture() -> Generator:
     with TestClient(app) as c:
         yield c
-    
+        
 @pytest.fixture(name="superuser_token_headers", scope="module")
 def super_token_headers():
     payload = create_access_token(subject=1, superuser=True)

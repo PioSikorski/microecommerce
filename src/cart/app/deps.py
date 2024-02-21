@@ -3,12 +3,11 @@ from typing import Annotated, Generator
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 from fastapi import Depends
 
+from src.core.config import CARTDB_URL, CART_MONGODB_DB
 
 
-MONGODB_URL = "mongodb://myuser:mysecretpassword@cart-mongodb-container:27017/"
-
-client = AsyncIOMotorClient(MONGODB_URL)
-db = client["orderdb"]
+client = AsyncIOMotorClient(CARTDB_URL)
+db = client[CART_MONGODB_DB]
 
 def get_db() -> Generator:
     try:

@@ -125,10 +125,12 @@ def test_update_user_normal_user(client: TestClient, normal_user_token_headers: 
     new_password = random_lower_string()
     data = {"password": new_password}
     response = client.put("/users/me", headers=normal_user_token_headers, json=data)
-    assert response.status_code == 400
+    assert response.status_code == 200
+    updated_user = response.json()
+    assert updated_user["email"] == settings.EMAIL_TEST_USER
 
 
-def test_get_existing_user(client: TestClient, superuser_token_headers: dict, session: Session) -> None:
+def test_get_existing_user_by_id(client: TestClient, session: Session, superuser_token_headers: dict) -> None:
     email = random_email()
     password = random_lower_string()
     user_in = UserCreate(email=email, password=password)
@@ -143,11 +145,11 @@ def test_get_existing_user(client: TestClient, superuser_token_headers: dict, se
     
     
 def test_get_non_existing_user(client: TestClient, superuser_token_headers: dict) -> None:
-    response = client.get("/users/0", headers=superuser_token_headers)
+    response = client.get("/users/2137", headers=superuser_token_headers)
     assert response.status_code == 404
     
 
-def test_get_existing_user_normal_user(client: TestClient, normal_user_token_headers: dict, session: Session) -> None:
+def test_get_existing_user_normal_user(client: TestClient, session: Session, normal_user_token_headers: dict) -> None:
     email = random_email()
     password = random_lower_string()
     user_in = UserCreate(email=email, password=password)
@@ -180,17 +182,17 @@ def test_create_existing_user_open(client: TestClient, session: Session) -> None
     assert "id" not in created_user
 
         
-def test_get_access_token(client: TestClient) -> None:
-    login_data = {
-        "username": settings.FIRST_SUPERUSER,
-        "password": settings.FIRST_SUPERUSER_PASSWORD,
-    }
-    response = client.post("/login/access-token", data=login_data)
+def test_get_access_token(client: TestClient, session: Session) -> None:
+    email = random_email()
+    password = random_lower_string()
+    user_in = UserCreate(email=email, password=password)
+    crud.create(db=session, obj_in=user_in)
+    response = client.post("/login/access-token", data={"username": email, "password": password})
     tokens = response.json()
     assert response.status_code == 200
     assert "access_token" in tokens
     assert tokens["access_token"]
-    
+
 
 def test_use_access_token(client: TestClient, superuser_token_headers: Dict[str, str]) -> None:
     response = client.post("/login/test-token", headers=superuser_token_headers)
