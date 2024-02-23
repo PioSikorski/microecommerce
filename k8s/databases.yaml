@@ -1,0 +1,209 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-mongodb-deployment
+  labels:
+    app: cart-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart-mongodb
+  template:
+    metadata:
+      labels:
+        app: cart-mongodb
+    spec:
+      containers:
+      - name: cart-mongodb
+        image: mongo
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-user
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-password
+        - name: MONGO_INITDB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-config
+              key: mongo-cart-db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-mongodb-deployment
+  labels:
+    app: order-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-mongodb
+  template:
+    metadata:
+      labels:
+        app: order-mongodb
+    spec:
+      containers:
+      - name: order-mongodb
+        image: mongo
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-user
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secret
+              key: mongo-password
+        - name: MONGO_INITDB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: mongo-config
+              key: mongo-order-db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-postgres-deployment
+  labels:
+    app: product-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-postgres
+  template:
+    metadata:
+      labels:
+        app: product-postgres
+    spec:
+      containers:
+      - name: product-postgres
+        image: postgres
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: postgres-product-host
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: postgres-product-db
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-postgres-deployment
+  labels:
+    app: user-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-postgres
+  template:
+    metadata:
+      labels:
+        app: user-postgres
+    spec:
+      containers:
+      - name: user-postgres
+        image: postgres
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: postgres-user-host
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: postgres-user-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-mongo-service
+spec:
+  selector:
+    app: cart-mongodb
+  ports:
+  - protocol: TCP
+    port: 27017
+    targetPort: 27017
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-order-service
+spec:
+  selector:
+    app: order-mongodb
+  ports:
+  - protocol: TCP
+    port: 27017
+    targetPort: 27017
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-postgres-service
+spec:
+  selector:
+    app: product-postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-postgres-service
+spec:
+  selector:
+    app: user-postgres
+  ports:
+  - protocol: TCP
+    port: 5432
+    targetPort: 5432

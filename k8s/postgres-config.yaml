@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+data:
+  postgres-product-host: product-postgres-service
+  postgres-user-host: user-postgres-service
+  postgres-product-db: productdb
+  postgres-user-db: userdb
