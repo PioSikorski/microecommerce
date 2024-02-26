@@ -1,5 +1,5 @@
 #!/bin/bash
 
-sleep 10
+sleep 15
 
 pytest -v -p no:warnings -k "not test_integration"

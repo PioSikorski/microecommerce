@@ -6,4 +6,4 @@ ADD ./src/ /src/
 
 RUN pip install -r requirements.txt
 
-CMD ["./tests/start-test.sh"]
+CMD ["/src/tests/start-test.sh"]

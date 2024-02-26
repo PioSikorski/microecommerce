@@ -14,69 +14,38 @@ jobs:
       with:
         python-version: 3.11.4
 
-    - name: Install Docker Compose
-      run: |
-        sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-
     - name: Install requirements
       run: |
         python -m pip install --upgrade pip
         pip install -r ./src/requirements.txt
 
-    - name: Run unit tests
-      run: docker-compose -f ./src/docker-compose.tests up -d
-      env:
-        USER_POSTGRES_HOST: ${{ secrets.USER_POSTGRES_HOST }}
-        USER_POSTGRES_PORT: ${{ secrets.USER_POSTGRES_PORT }}
-        USER_POSTGRES_USER: ${{ secrets.USER_POSTGRES_USER }}
-        USER_POSTGRES_PASSWORD: ${{ secrets.USER_POSTGRES_PASSWORD }}
-        USER_POSTGRES_DB: ${{ secrets.USER_POSTGRES_DB }}
-        PRODUCT_POSTGRES_HOST: ${{ secrets.PRODUCT_POSTGRES_HOST }}
-        PRODUCT_POSTGRES_PORT: ${{ secrets.PRODUCT_POSTGRES_PORT }}
-        PRODUCT_POSTGRES_USER: ${{ secrets.PRODUCT_POSTGRES_USER }}
-        PRODUCT_POSTGRES_PASSWORD: ${{ secrets.PRODUCT_POSTGRES_PASSWORD }}
-        PRODUCT_POSTGRES_DB: ${{ secrets.PRODUCT_POSTGRES_DB }}
-        CART_MONGODB_HOST: ${{ secrets.CART_MONGODB_HOST }}
-        CART_MONGODB_USER: ${{ secrets.CART_MONGODB_USER }}
-        CART_MONGODB_PASSWORD: ${{ secrets.CART_MONGODB_PASSWORD }}
-        CART_MONGODB_DB: ${{ secrets.CART_MONGODB_DB }}
-        ORDER_MONGODB_HOST: ${{ secrets.ORDER_MONGODB_HOST }}
-        ORDER_MONGODB_USER: ${{ secrets.ORDER_MONGODB_USER }}
-        ORDER_MONGODB_PASSWORD: ${{ secrets.ORDER_MONGODB_PASSWORD }}
-        ORDER_MONGODB_DB: ${{ secrets.ORDER_MONGODB_DB }}
-        TESTING: True
+    - name: Add execute permissions to start-test.sh
+      run: chmod +x ./src/tests/start-test.sh
 
-    - name: Stop Docker Compose
-      run: docker-compose -f ./src/docker-compose.tests down
-    
-    - name: Test integration
-      run: docker-compose up -d
-      env:
-        USER_POSTGRES_HOST: ${{ secrets.USER_POSTGRES_HOST }}
-        USER_POSTGRES_PORT: ${{ secrets.USER_POSTGRES_PORT }}
-        USER_POSTGRES_USER: ${{ secrets.USER_POSTGRES_USER }}
-        USER_POSTGRES_PASSWORD: ${{ secrets.USER_POSTGRES_PASSWORD }}
-        USER_POSTGRES_DB: ${{ secrets.USER_POSTGRES_DB }}
-        PRODUCT_POSTGRES_HOST: ${{ secrets.PRODUCT_POSTGRES_HOST }}
-        PRODUCT_POSTGRES_PORT: ${{ secrets.PRODUCT_POSTGRES_PORT }}
-        PRODUCT_POSTGRES_USER: ${{ secrets.PRODUCT_POSTGRES_USER }}
-        PRODUCT_POSTGRES_PASSWORD: ${{ secrets.PRODUCT_POSTGRES_PASSWORD }}
-        PRODUCT_POSTGRES_DB: ${{ secrets.PRODUCT_POSTGRES_DB }}
-        CART_SERVICE_NAME: ${{ secrets.CART_SERVICE_NAME }}
-        CART_MONGODB_HOST: ${{ secrets.CART_MONGODB_HOST }}
-        CART_MONGODB_USER: ${{ secrets.CART_MONGODB_USER }}
-        CART_MONGODB_PASSWORD: ${{ secrets.CART_MONGODB_PASSWORD }}
-        CART_MONGODB_DB: ${{ secrets.CART_MONGODB_DB }}
-        ORDER_MONGODB_HOST: ${{ secrets.ORDER_MONGODB_HOST }}
-        ORDER_MONGODB_USER: ${{ secrets.ORDER_MONGODB_USER }}
-        ORDER_MONGODB_PASSWORD: ${{ secrets.ORDER_MONGODB_PASSWORD }}
-        ORDER_MONGODB_DB: ${{ secrets.ORDER_MONGODB_DB }}
+    - name: Setup containers and run unit tests
+      run: docker-compose -f ./src/docker-compose.tests up -d
+
+    - name: Wait for completion of unit tests and check results
+      run: |
+        set -e
+        sleep 20
+        docker-compose -f ./src/docker-compose.tests logs
+        container_id=$(docker-compose -f ./src/docker-compose.tests ps -q test)
+        exit_code=$(docker inspect -f '{{.State.ExitCode}}' $container_id)
+        docker-compose -f ./src/docker-compose.tests down
+        if [ $exit_code -ne 0 ]; then
+          exit 1
+        fi
+
+    - name: Setup containers for integration tests
+      run: docker-compose -f ./src/docker-compose.yml up -d
 
     - name: Run integration tests
       run: |
-        sleep 30
+        sleep 5
         pytest ./src/tests
 
-    - name: Stop Docker Compose
-      run: docker-compose down
+    - name: Wait for completion of integration tests and results
+      run: |
+        sleep 5
+        docker-compose -f ./src/docker-compose.yml down

@@ -35,7 +35,7 @@ services:
     container_name: user-container
     build:
       context: ..
-      dockerfile: /src/user/Dockerfile
+      dockerfile: src/user/Dockerfile
     environment:
       USER_POSTGRES_HOST: ${USER_POSTGRES_HOST}
       USER_POSTGRES_PORT: ${USER_POSTGRES_PORT}
@@ -65,7 +65,7 @@ services:
     container_name: product-container
     build:
       context: ..
-      dockerfile: /src/product/Dockerfile
+      dockerfile: src/product/Dockerfile
     environment:
       PRODUCT_POSTGRES_HOST: ${PRODUCT_POSTGRES_HOST}
       PRODUCT_POSTGRES_PORT: ${PRODUCT_POSTGRES_PORT}
@@ -95,7 +95,7 @@ services:
     container_name: order-container
     build:
       context: ..
-      dockerfile: /src/order/Dockerfile
+      dockerfile: src/order/Dockerfile
     environment:
       ORDER_MONGODB_HOST: ${ORDER_MONGODB_HOST}
       ORDER_MONGODB_USER: ${ORDER_MONGODB_USER}
@@ -125,7 +125,7 @@ services:
     container_name: cart-container
     build:
       context: ..
-      dockerfile: /src/cart/Dockerfile
+      dockerfile: src/cart/Dockerfile
     environment:
       CART_MONGODB_HOST: ${CART_MONGODB_HOST}
       CART_MONGODB_USER: ${CART_MONGODB_USER}
